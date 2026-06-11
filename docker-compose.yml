@@ -1,0 +1,31 @@
+services:
+  traefik:
+    image: traefik:v3.0
+    command:
+      - --api.insecure=true
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --entrypoints.web.address=:80
+    ports:
+      - "80:80"
+      - "8080:8080" # Dashboard
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+
+  uns_builder:
+    build:
+      context: ../uns_builder
+      dockerfile: Dockerfile
+    volumes:
+      - ../uns_builder:/app:rw
+    environment:
+      - ENV=development
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.uns.rule=Host(`uns.zavia.local`)"
+      - "traefik.http.routers.uns.entrypoints=web"
+
+  mosquitto:
+    image: iegomez/mosquitto-go-auth:latest
+    volumes:
+      - ./appdata/mosquitto/config:/mosquitto/config:rw
