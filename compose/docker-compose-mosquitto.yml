@@ -1,0 +1,25 @@
+services:
+  mosquitto:
+    image: eclipse-mosquitto:latest
+    restart: unless-stopped
+    profiles: ["core", "broker", "all"]
+    networks:
+      - traefik_proxy
+      - default
+    environment:
+      - TZ=${TZ}
+    volumes:
+      - ${DOCKERDIR}/logs/mosquitto:/mosquitto/log
+      - ${DOCKERDIR}/appdata/mosquitto/data:/mosquitto/data
+      - ${DOCKERDIR}/appdata/mosquitto/config:/mosquitto/config
+    labels:
+      - traefik.enable=true
+      - traefik.tcp.routers.mqtt-rtr.entrypoints=mqtt
+      - traefik.tcp.routers.mqtt-rtr.rule=HostSNI(`*`)
+      - traefik.tcp.routers.mqtt-rtr.service=mqtt-svc
+      - traefik.tcp.services.mqtt-svc.loadbalancer.server.port=1883
+      - traefik.tcp.routers.mqtt-secure-rtr.entrypoints=mqtt-secure
+      - traefik.tcp.routers.mqtt-secure-rtr.rule=HostSNI(`*`)
+      - traefik.tcp.routers.mqtt-secure-rtr.tls.passthrough=true
+      - traefik.tcp.routers.mqtt-secure-rtr.service=mqtt-secure-svc
+      - traefik.tcp.services.mqtt-secure-svc.loadbalancer.server.port=8883

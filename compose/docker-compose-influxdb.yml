@@ -1,0 +1,26 @@
+services:
+  influxdb:
+    image: influxdb:2
+    restart: unless-stopped
+    profiles: ["monitoring", "all"]
+    networks:
+      - default
+      - traefik_proxy
+    ports:
+      - "8086:8086"
+    environment:
+      - DOCKER_INFLUXDB_INIT_MODE=setup
+      - DOCKER_INFLUXDB_INIT_USERNAME=${INFLUXDB_INIT_USERNAME}
+      - DOCKER_INFLUXDB_INIT_PASSWORD=${INFLUXDB_INIT_PASSWORD}
+      - DOCKER_INFLUXDB_INIT_ORG=${INFLUXDB_INIT_ORG}
+      - DOCKER_INFLUXDB_INIT_BUCKET=${INFLUXDB_INIT_BUCKET}
+      - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=${INFLUXDB_INIT_ADMIN_TOKEN}
+    volumes:
+      - ${DOCKERDIR}/appdata/influxdb/data:/var/lib/influxdb2
+      - ${DOCKERDIR}/appdata/influxdb/config:/etc/influxdb2
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.influxdb-rtr.entrypoints=websecure
+      - traefik.http.routers.influxdb-rtr.rule=Host(`influxdb.${DOMAINNAME_1}`)
+      - traefik.http.routers.influxdb-rtr.service=influxdb-svc
+      - traefik.http.services.influxdb-svc.loadbalancer.server.port=8086

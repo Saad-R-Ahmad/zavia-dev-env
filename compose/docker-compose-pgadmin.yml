@@ -1,0 +1,27 @@
+services:
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    restart: unless-stopped
+    profiles: ["db", "all"]
+    user: root
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - traefik_proxy
+      - default
+    environment:
+      - TZ=${TZ}
+      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_EMAIL}
+      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_PASSWORD}
+      - PGADMIN_CONFIG_SERVER_MODE=True
+      - PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED=False
+      - PGADMIN_LISTEN_PORT=80
+    volumes:
+      - ${DOCKERDIR}/appdata/pgadmin/data:/var/lib/pgadmin
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.pgadmin-rtr.entrypoints=websecure
+      - traefik.http.routers.pgadmin-rtr.rule=Host(`pgadmin.${DOMAINNAME_1}`)
+      - traefik.http.routers.pgadmin-rtr.service=pgadmin-svc
+      - traefik.http.services.pgadmin-svc.loadbalancer.server.port=80

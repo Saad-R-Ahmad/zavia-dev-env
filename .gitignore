@@ -1,17 +1,16 @@
-# Python-generated files
-__pycache__/
-*.py[oc]
-build/
-dist/
-wheels/
-*.egg-info
+# Local development env files
+.dev.env
+secrets/
 
-# Virtual environments
-.venv
+# Runtime artifacts
+logs/*
+!logs/.gitkeep
 
-#data folders
-redis/data/*
-src/data/*
-influxdb/data/*
-influxdb/config/*
-.cache/
+# Persistent runtime data
+appdata/**/data/
+appdata/**/pgdata/*
+compose/appdata/**/data/
+compose/appdata/**/pgdata/*
+
+# IDE/OS
+.DS_Store
