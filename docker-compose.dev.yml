@@ -1,0 +1,210 @@
+# Copyright 2022 Thetaphi Ltd.
+# Docker file for development of the backend only the dev folder is attached to the image so dev changes are picked up in the container
+# version: "2.4"
+
+# Services
+services:
+  # UNS BUILDER Application
+  uns-builder:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: uns-dev
+    profiles: ["core","uns","apps"]
+    user: "1000:1000"
+    environment:
+      - PYTHONPATH=/
+      - XDG_CACHE_HOME=/src/.cache/uv
+      - UVICORN_RELOAD=True
+      - USE_ENV_FILE=False
+      - LOG_LEVEL=debug
+      - mqtt_broker=simulation-broker
+      - mqtt_port=1883
+      - mqtt_username=eon-node
+      - mqtt_password=thetaphi
+      - mqtt_client_id=uns_builder_dev
+      - mqtt_tls_enabled=False
+      - mqtt_keepalive=60
+      - mqtt_clean_session=True
+      - mqtt_protocol_version=4
+      - mqtt_reconnect_delay=5
+      - mqtt_reconnect_delay_max=120
+      - mqtt_reconnect_delay_jitter=0.1
+      - mqtt_max_inflight_messages=20
+      - mqtt_max_queued_messages=1000
+      - mqtt_message_timeout=60
+      - mqtt_will_topic=None
+      - mqtt_will_payload=None
+      - mqtt_will_qos=0
+      - mqtt_will_retain=False
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=uns_builder
+      - DB_USER=uns_user
+      - DB_PASSWORD=uns_password
+    mem_limit: 1024mb
+    restart: unless-stopped
+    volumes:
+      - ./app/src:/app/src:ro
+    networks:
+        - uns-dev-proxy
+    ports:
+      - 8000:8000
+  
+  postgres:
+    image: postgres:15-alpine
+    container_name: postgres
+    profiles: ["core","postgres"]
+    restart: unless-stopped
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_DB: uns_builder
+      POSTGRES_USER: uns_user
+      POSTGRES_PASSWORD: uns_password
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - uns-dev-proxy
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U uns_user -d uns_builder"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:alpine
+    container_name: redis
+    profiles: ["redis"]
+    restart: unless-stopped
+    ports:
+      - 6379:6379
+    command: redis-server --appendonly yes --save 20 1 --loglevel warning --requirepass eYVX7EwVmmxKPCDmwMtyKVge8oLd2t81
+    networks:
+      - uns-dev-proxy
+    volumes:
+      - redis-data:/data
+
+  influxdb:
+    image: influxdb:2
+    container_name: influxdb
+    profiles: ["core","influxdb"]
+    ports:
+      - 8086:8086
+    environment:
+      DOCKER_INFLUXDB_INIT_MODE: setup
+      DOCKER_INFLUXDB_INIT_USERNAME: ThetaPhi
+      DOCKER_INFLUXDB_INIT_PASSWORD: iEdge@Cv312DJ
+      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: QfXVYATtEdPTrS0i7OrRH3Zm6YcJVB_WKvczL-SXo2eKvL2dhDHmB1E6iSDRo0HmlGI_AIYcxzKXGicFk5MYRA==
+      DOCKER_INFLUXDB_INIT_ORG: ThetaPhi
+      DOCKER_INFLUXDB_INIT_BUCKET: Edge
+    volumes:
+      - type: bind
+        source: ./influxdb/data
+        target: /var/lib/influxdb2
+      - type: bind
+        source: ./influxdb/config
+        target: /etc/influxdb2
+    networks:
+      - uns-dev-proxy
+
+  telegraf:
+    image: telegraf:alpine
+    container_name: telegraf
+    profiles: ["core","influxdb","telegraf"]
+    restart: unless-stopped
+    networks:
+      - uns-dev-proxy
+    volumes:
+      - ./telegraf/config/telegraf.conf:/etc/telegraf/telegraf.conf:rw
+      - ./telegraf/starlark/starlark_script.star:/etc/telegraf/starlark/starlark_script.star:rw
+    depends_on:
+      - influxdb
+
+    # MQTT Broker (IE-Databus)
+  simulation-broker:
+    image: eclipse-mosquitto:1.6.10
+    container_name: simulation-broker
+    profiles: ["core","simulation-broker"]
+    networks:
+      - uns-dev-proxy
+    ports:
+      - 11883:1883
+      - 9001:9001
+    volumes:
+      - './mosquitto-conf/mosquitto.conf:/mosquitto/config/mosquitto.conf'
+      - './mosquitto-conf/mosquitto_pwd:/mosquitto/config/mosquitto_pwd'
+    mem_limit: 128mb
+    restart: unless-stopped
+
+  #Simulation Service for siemens
+  sie-simulator:
+    image: siemensindustrialedge/dataservicesimulation:1.5.2
+    container_name: sie-simulator
+    profiles: ["apps","simulator"]
+    environment:
+      - PLATFORM=edge
+      - OPERATOR_PLAN=edge
+      - DBSERVICETYPE=postgres
+      - DBSERVICE=Edge
+      - EXTENDED_ERRORS=true
+      - LOG_DEBUG_INFO=true
+      - MQTT_BROKER_URL=tcp://simulation-broker:1883
+      - MQTT_BROKER_USR=eon-node
+      - MQTT_BROKER_PSW=thetaphi
+      - SIM_MODE=MQTT
+      - AUTHENTICATION_MODE=sim-edge
+      - APPLICATION_NAME=edgeappdataservice
+      - POSTGRES_DB_FILE=/run/postgres-db
+      - POSTGRES_USER_FILE=/run/postgres-user
+      - POSTGRES_PASSWORD_FILE=/run/postgres-passwd
+      - START_POSTGRES=1
+      - POSTGRES_START_ARGS=-B 1MB
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    ports:
+      - 4519:4519
+    networks:
+      - uns-dev-proxy
+    mem_limit: 128mb
+    volumes:
+      - '/tmp/siemens/automation:/tmp/siemens/automation'
+      - type: volume
+        source: db-edge-apps-simulation-volume
+        target: /var/lib/postgresql/data
+    restart: unless-stopped
+
+  # SparkplugB Simulator
+  spb-simulator:
+    build:
+      context: ./spb_sim
+      dockerfile: Dockerfile
+    image: spb-simulator:dev
+    container_name: spb-simulator
+    profiles: ["apps","simulator"]
+    environment:
+      - MQTT_BROKER=simulation-broker
+      - MQTT_PORT=1883
+      - MQTT_USERNAME=eon-node
+      - MQTT_PASSWORD=thetaphi
+      - SPB_GROUP_ID=Sparkplug B Devices
+      - SPB_NODE_NAME=Python Edge Node 1
+      - SPB_DEVICE_NAME=Emulated Device
+      - PUBLISH_PERIOD=5000
+    networks:
+      - uns-dev-proxy
+    mem_limit: 128mb
+    restart: unless-stopped
+
+volumes:
+  db-edge-apps-simulation-volume:
+  redis-data:
+  postgres-data:
+#   influxdb-config:
+
+networks:
+    uns-dev-proxy:
+      name: uns-dev-proxy
