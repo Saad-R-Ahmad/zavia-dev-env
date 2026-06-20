@@ -1,12 +1,7 @@
-echo "starting development environment..."
+#!/usr/bin/env bash
+set -euo pipefail
 
-docker compose -f docker-compose.dev.yml --profile uns up -d --build
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-echo "Development environment started. Press Ctrl+C to stop log streaming."
-trap 'echo; echo "Stopping log stream..."; ' INT
-docker logs -f uns-dev || true
-trap - INT
-
-echo stopping development environment...
-docker compose -f docker-compose.dev.yml --profile uns down
-echo "Development environment stopped."
+# Compatibility wrapper: keep this script name working.
+exec "${SCRIPT_DIR}/start-dev.sh" "${1:-all}"

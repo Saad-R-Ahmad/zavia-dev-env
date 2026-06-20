@@ -1,0 +1,59 @@
+
+services:
+  sie-devkit:
+    image: siemensindustrialedge/dataservicedevelopmentkit:2.5.0
+    container_name: sie-devkit
+    profiles: ["apps","simulator","sie-devkit"]
+    depends_on:
+      mosquitto:
+        condition: service_started
+    environment:
+      - PLATFORM=edge
+      - OPERATOR_PLAN=edge
+      - DBSERVICETYPE=postgres
+      - DBSERVICE=Edge
+      - EXTENDED_ERRORS=true
+      - LOG_DEBUG_INFO=true
+      - MQTT_BROKER_URL=tcp://mosquitto:1883
+      - MQTT_BROKER_USR=ThetaPhi
+      - MQTT_BROKER_PSW=iEdge@Cv312DJ
+      - SIM_MODE=MQTT
+      - AUTHENTICATION_MODE=sim-edge
+      - APPLICATION_NAME=edgeappdataservice
+      - POSTGRES_DB_FILE=/run/postgres-db
+      - POSTGRES_USER_FILE=/run/postgres-user
+      - POSTGRES_PASSWORD_FILE=/run/postgres-passwd
+      - START_POSTGRES=1
+      - POSTGRES_START_ARGS=-B 1MB
+      - EXTENDED_ERRORS=true
+      - LOG_DEBUG_INFO=true
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -fsS http://localhost:4203/ >/dev/null || exit 1" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    ports:
+      - 4203:4203
+    networks:
+      - traefik_proxy
+      - default
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.siedevkit-rtr-http.entrypoints=web
+      - traefik.http.routers.siedevkit-rtr-http.rule=Host(`siedevkit.${DOMAINNAME_1}`)
+      - traefik.http.routers.siedevkit-rtr-http.service=siedevkit-svc
+      - traefik.http.routers.siedevkit-rtr.entrypoints=websecure
+      - traefik.http.routers.siedevkit-rtr.rule=Host(`siedevkit.${DOMAINNAME_1}`)
+      - traefik.http.routers.siedevkit-rtr.tls=true
+      - traefik.http.routers.siedevkit-rtr.service=siedevkit-svc
+      - traefik.http.services.siedevkit-svc.loadbalancer.server.port=4203
+    mem_limit: 128mb
+    volumes:
+      - '/tmp/siemens/automation:/tmp/siemens/automation'
+      - type: volume
+        source: db-edge-apps-simulation-volume
+        target: /var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  db-edge-apps-simulation-volume:

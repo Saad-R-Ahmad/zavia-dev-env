@@ -1,31 +1,30 @@
-services:
-  traefik:
-    image: traefik:v3.0
-    command:
-      - --api.insecure=true
-      - --providers.docker=true
-      - --providers.docker.exposedbydefault=false
-      - --entrypoints.web.address=:80
-    ports:
-      - "80:80"
-      - "8080:8080" # Dashboard
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
+networks:
+  default:
+    driver: bridge
+  socket_proxy:
+    name: socket_proxy
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.91.0/24
+  traefik_proxy:
+    name: traefik_proxy
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.90.0/24
 
-  uns_builder:
-    build:
-      context: ../uns_builder
-      dockerfile: Dockerfile
-    volumes:
-      - ../uns_builder:/app:rw
-    environment:
-      - ENV=development
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.uns.rule=Host(`uns.zavia.local`)"
-      - "traefik.http.routers.uns.entrypoints=web"
-
-  mosquitto:
-    image: iegomez/mosquitto-go-auth:latest
-    volumes:
-      - ./appdata/mosquitto/config:/mosquitto/config:rw
+include:
+  - ./compose/docker-compose-socket-proxy.yml
+  - ./compose/docker-compose-traefik-local.yml
+  - ./compose/docker-compose-postgres.yml
+  - ./compose/docker-compose-pgadmin.yml
+  - ./compose/docker-compose-redis.yml
+  - ./compose/docker-compose-mosquitto.yml
+  - ./compose/docker-compose-influxdb.yml
+  - ./compose/docker-compose-telegraf.yml
+  - ./compose/docker-compose-authentik.yml
+  - ./compose/docker-compose-uns-builder.yml
+  - ./compose/docker-compose-spb-sim.yml
+  - ./compose/docker-compose-sie-sim.yml
+  - ./compose/docker-compose-zavia-apps.yml

@@ -1,0 +1,24 @@
+services:
+  spb-simulator:
+    build:
+      context: ../../uns_builder/spb_sim
+      dockerfile: Dockerfile
+    image: spb-simulator:dev
+    container_name: spb-simulator
+    profiles: ["apps","simulator"]
+    depends_on:
+      mosquitto:
+        condition: service_started
+    environment:
+      - MQTT_BROKER=mosquitto
+      - MQTT_PORT=1883
+      - MQTT_USERNAME=ThetaPhi
+      - MQTT_PASSWORD=iEdge@Cv312DJ
+      - SPB_GROUP_ID=Sparkplug B Devices
+      - SPB_NODE_NAME=Python Edge Node 1
+      - SPB_DEVICE_NAME=Emulated Device
+      - PUBLISH_PERIOD=5000
+    networks:
+      - traefik_proxy
+    mem_limit: 128mb
+    restart: unless-stopped

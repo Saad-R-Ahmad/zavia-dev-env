@@ -2,7 +2,7 @@ services:
   mosquitto:
     image: eclipse-mosquitto:latest
     restart: unless-stopped
-    profiles: ["core", "broker", "all"]
+    profiles: ["core", "broker", "apps", "all"]
     networks:
       - traefik_proxy
       - default

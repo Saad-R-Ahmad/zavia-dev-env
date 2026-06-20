@@ -1,7 +1,7 @@
 services:
   uns-builder:
     build:
-      context: ${UNS_BUILDER_CONTEXT}
+      context: ../../uns_builder
       dockerfile: Dockerfile
     restart: unless-stopped
     profiles: ["apps", "all"]
@@ -24,12 +24,16 @@ services:
       - mqtt_will_topic=${UNS_MQTT_WILL_TOPIC}
       - mqtt_will_payload=${UNS_MQTT_WILL_PAYLOAD}
     volumes:
-      - ${UNS_BUILDER_CONTEXT}/app/src:/app/src:ro
+      - ../../uns_builder/app/src:/app/src:ro
     ports:
       - "${UNS_BUILDER_HOST_PORT:-8000}:8000"
     labels:
       - traefik.enable=true
+      - traefik.http.routers.uns-rtr-http.entrypoints=web
+      - traefik.http.routers.uns-rtr-http.rule=Host(`uns.${DOMAINNAME_1}`)
+      - traefik.http.routers.uns-rtr-http.service=uns-svc
       - traefik.http.routers.uns-rtr.entrypoints=websecure
       - traefik.http.routers.uns-rtr.rule=Host(`uns.${DOMAINNAME_1}`)
+      - traefik.http.routers.uns-rtr.tls=true
       - traefik.http.routers.uns-rtr.service=uns-svc
       - traefik.http.services.uns-svc.loadbalancer.server.port=8000

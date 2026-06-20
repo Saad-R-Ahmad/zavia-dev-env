@@ -1,12 +1,15 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-if [[ ! -f .dev.env ]]; then
-  echo "Missing .dev.env"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+
+if [[ ! -f "${PROJECT_ROOT}/.env" ]]; then
+  echo "Missing ${PROJECT_ROOT}/.env"
   exit 1
 fi
 
 echo "Stopping development stack..."
-docker compose --env-file .dev.env -f docker-compose.dev.yml --profile all down
+docker compose --project-directory "${PROJECT_ROOT}" --env-file "${PROJECT_ROOT}/.env" -f "${PROJECT_ROOT}/docker-compose.yml" --profile all down
 
 echo "Stopped."
