@@ -10,6 +10,7 @@ services:
       - default
     environment:
       - ENV=development
+      - UVICORN_RELOAD=true
       - DB_HOST=postgres
       - DB_PORT=5432
       - DB_NAME=${POSTGRES_DB}
