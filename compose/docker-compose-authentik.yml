@@ -35,8 +35,14 @@ services:
       - ${DOCKERDIR}/appdata/authentik/custom-templates:/templates
     labels:
       - traefik.enable=true
+      - traefik.http.routers.auth-rtr-http.entrypoints=web
+      - traefik.http.routers.auth-rtr-http.rule=Host(`auth.${DOMAINNAME_1}`)
+      - traefik.http.routers.auth-rtr-http.middlewares=auth-https-redirect
+      - traefik.http.middlewares.auth-https-redirect.redirectscheme.scheme=https
+      - traefik.http.middlewares.auth-https-redirect.redirectscheme.permanent=true
       - traefik.http.routers.auth-rtr.entrypoints=websecure
       - traefik.http.routers.auth-rtr.rule=Host(`auth.${DOMAINNAME_1}`)
+      - traefik.http.routers.auth-rtr.tls=true
       - traefik.http.routers.auth-rtr.service=auth-svc
       - traefik.http.services.auth-svc.loadbalancer.server.port=9000
 
