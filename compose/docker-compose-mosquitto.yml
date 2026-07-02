@@ -2,6 +2,7 @@ services:
   mosquitto:
     image: eclipse-mosquitto:latest
     restart: unless-stopped
+    container_name: zavia-mosquitto
     profiles: ["core", "broker", "apps", "all"]
     networks:
       - traefik_proxy

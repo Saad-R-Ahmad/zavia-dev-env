@@ -4,7 +4,7 @@ services:
       context: ../../uns_builder/spb_sim
       dockerfile: Dockerfile
     image: spb-simulator:dev
-    container_name: spb-simulator
+    container_name: zavia-spb-simulator
     profiles: ["apps","simulator"]
     depends_on:
       mosquitto:

@@ -2,7 +2,7 @@
 services:
   sie-devkit:
     image: siemensindustrialedge/dataservicedevelopmentkit:2.5.0
-    container_name: sie-devkit
+    container_name: zavia-sie-devkit
     profiles: ["apps","simulator","sie-devkit"]
     depends_on:
       mosquitto:

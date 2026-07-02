@@ -2,6 +2,7 @@ services:
   authentik-server:
     image: ghcr.io/goauthentik/server:2025.6
     restart: unless-stopped
+    container_name: zavia-authentik
     profiles: ["core", "auth", "all"]
     command: server
     depends_on:

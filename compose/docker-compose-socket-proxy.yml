@@ -2,6 +2,7 @@ services:
   socket-proxy:
     image: tecnativa/docker-socket-proxy:latest
     restart: unless-stopped
+    container_name: zavia-socket-proxy
     profiles: ["core", "all"]
     security_opt:
       - no-new-privileges:true

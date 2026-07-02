@@ -2,6 +2,7 @@ services:
   pgadmin:
     image: dpage/pgadmin4:latest
     restart: unless-stopped
+    container_name: zavia-pgadmin
     profiles: ["db", "all"]
     user: root
     depends_on:

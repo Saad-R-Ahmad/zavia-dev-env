@@ -2,6 +2,7 @@ services:
   postgres:
     image: postgres:16-alpine
     restart: unless-stopped
+    container_name: zavia-postgres
     profiles: ["core", "db", "all"]
     networks:
       - traefik_proxy

@@ -4,7 +4,9 @@ services:
       context: ../../uns_builder
       dockerfile: Dockerfile
     restart: unless-stopped
+    container_name: zavia-uns-builder
     profiles: ["apps", "all"]
+    command: uvicorn main:app --app-dir /app/src --host 0.0.0.0 --port 8000 --reload
     networks:
       - traefik_proxy
       - default
@@ -25,7 +27,7 @@ services:
       - mqtt_will_topic=${UNS_MQTT_WILL_TOPIC}
       - mqtt_will_payload=${UNS_MQTT_WILL_PAYLOAD}
     volumes:
-      - ../../uns_builder/app/src:/app/src:ro
+      - ../../uns_builder/app/src:/app/src
     ports:
       - "${UNS_BUILDER_HOST_PORT:-8000}:8000"
     labels:

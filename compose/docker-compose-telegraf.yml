@@ -2,6 +2,7 @@ services:
   telegraf:
     image: telegraf:alpine
     restart: unless-stopped
+    container_name: zavia-telegraf
     profiles: ["monitoring", "all"]
     networks:
       - default
