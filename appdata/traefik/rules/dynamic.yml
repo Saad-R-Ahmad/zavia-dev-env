@@ -1,0 +1,7 @@
+tls:
+  certificates:
+    - certFile: /certs/zavia_wildcard.crt
+      keyFile: /certs/zavia_wildcard.key
+  options:
+    default:
+      minVersion: VersionTLS12

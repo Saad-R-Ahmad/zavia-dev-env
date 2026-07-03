@@ -1,0 +1,8 @@
+http:
+  middlewares:
+    # Chain with Authentik authentication
+    chain-authentik-auth:
+      chain:
+        middlewares:
+          - middlewares-secure-headers
+          - authentik-auth

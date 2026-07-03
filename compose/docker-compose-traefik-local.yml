@@ -37,7 +37,8 @@ services:
       - "${MQTT_PORT}:1883"
       - "${MQTT_SECURE_PORT}:8883"
     volumes:
-      - ${DOCKERDIR}/appdata/traefik/config:/rules
+      - ${DOCKERDIR}/appdata/traefik/rules:/rules
+      - ${DOCKERDIR}/appdata/traefik/certs:/certs
       - ${DOCKERDIR}/logs/traefik:/logs
     environment:
       - TZ=${TZ}
