@@ -1,4 +1,70 @@
 services:
+  authentik-blueprint-apply:
+    image: ghcr.io/goauthentik/server:2025.6
+    restart: "no"
+    profiles: ["core", "auth", "all"]
+    command:
+      - shell
+      - -c
+      - |
+        from pathlib import Path
+        import hashlib
+        from django.core.management import call_command
+
+        blueprint = Path('/blueprints/custom/authentik-blueprint.yaml')
+        hash_file = Path('/media/.authentik-blueprint.sha256')
+
+        if not blueprint.exists():
+            print('No blueprint at /blueprints/custom/authentik-blueprint.yaml, skipping apply')
+            raise SystemExit(0)
+
+        new_hash = hashlib.sha256(blueprint.read_bytes()).hexdigest()
+        old_hash = hash_file.read_text().strip() if hash_file.exists() else ''
+
+        if new_hash == old_hash:
+            print('Blueprint unchanged, skipping apply')
+            raise SystemExit(0)
+
+        print('Applying blueprint /blueprints/custom/authentik-blueprint.yaml')
+        apply_ok = True
+        try:
+          call_command('apply_blueprint', str(blueprint))
+        except SystemExit as exc:
+          # apply_blueprint may terminate the shell command with SystemExit(0)
+          if exc.code not in (0, None):
+            apply_ok = False
+            print(f'Blueprint apply exited non-zero: {exc.code}')
+        except Exception as exc:
+          apply_ok = False
+          print(f'Blueprint apply error: {exc}')
+
+        hash_file.write_text(new_hash + '\n')
+        if apply_ok:
+          print('Blueprint apply completed and hash updated')
+        else:
+          print('Blueprint apply had errors; hash updated to prevent repeated retries on unchanged blueprint')
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - default
+    environment:
+      - TZ=${TZ}
+      - AUTHENTIK_SECRET_KEY=${AUTHENTIK_SECRET_KEY}
+      - AUTHENTIK_REDIS__HOST=redis
+      - AUTHENTIK_REDIS__PORT=6379
+      - AUTHENTIK_REDIS__PASSWORD=${REDIS_PASSWORD}
+      - AUTHENTIK_POSTGRESQL__HOST=postgres
+      - AUTHENTIK_POSTGRESQL__PORT=5432
+      - AUTHENTIK_POSTGRESQL__NAME=${AUTHENTIK_DB_NAME}
+      - AUTHENTIK_POSTGRESQL__USER=${AUTHENTIK_DB_USER}
+      - AUTHENTIK_POSTGRESQL__PASSWORD=${AUTHENTIK_DB_PASSWORD}
+    volumes:
+      - ${DOCKERDIR}/appdata/authentik/media:/media
+      - ${DOCKERDIR}/appdata/authentik/config-exports/blueprints/current:/blueprints/custom:ro
+
   authentik-server:
     image: ghcr.io/goauthentik/server:2025.6
     restart: unless-stopped
@@ -10,6 +76,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_started
+      authentik-blueprint-apply:
+        condition: service_completed_successfully
     networks:
       - traefik_proxy
       - default
@@ -33,6 +101,7 @@ services:
     volumes:
       - ${DOCKERDIR}/appdata/authentik/media:/media
       - ${DOCKERDIR}/appdata/authentik/custom-templates:/templates
+      - ${DOCKERDIR}/appdata/authentik/config-exports/blueprints/current:/blueprints/custom:ro
     labels:
       - traefik.enable=true
       - traefik.http.routers.auth-rtr-http.entrypoints=web
@@ -56,6 +125,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_started
+      authentik-blueprint-apply:
+        condition: service_completed_successfully
     networks:
       - default
     environment:
@@ -72,3 +143,4 @@ services:
     volumes:
       - ${DOCKERDIR}/appdata/authentik/media:/media
       - ${DOCKERDIR}/appdata/authentik/custom-templates:/templates
+      - ${DOCKERDIR}/appdata/authentik/config-exports/blueprints/current:/blueprints/custom:ro

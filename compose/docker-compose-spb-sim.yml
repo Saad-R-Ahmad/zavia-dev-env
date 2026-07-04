@@ -1,7 +1,7 @@
 services:
   spb-simulator:
     build:
-      context: ../../uns_builder/spb_sim
+      context: ../../spb_sim
       dockerfile: Dockerfile
     image: spb-simulator:dev
     container_name: zavia-spb-simulator
@@ -12,8 +12,8 @@ services:
     environment:
       - MQTT_BROKER=mosquitto
       - MQTT_PORT=1883
-      - MQTT_USERNAME=ThetaPhi
-      - MQTT_PASSWORD=iEdge@Cv312DJ
+      - MQTT_USERNAME=SparkplugBSimulator
+      - MQTT_PASSWORD=th3taPhi@Cv312DJ
       - SPB_GROUP_ID=Sparkplug B Devices
       - SPB_NODE_NAME=Python Edge Node 1
       - SPB_DEVICE_NAME=Emulated Device

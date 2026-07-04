@@ -1,18 +1,23 @@
 services:
   mosquitto:
-    image: eclipse-mosquitto:latest
+    image: iegomez/mosquitto-go-auth:latest
     restart: unless-stopped
     container_name: zavia-mosquitto
     profiles: ["core", "broker", "apps", "all"]
     networks:
       - traefik_proxy
       - default
+    depends_on:
+      postgres:
+        condition: service_healthy
     environment:
       - TZ=${TZ}
     volumes:
-      - ${DOCKERDIR}/logs/mosquitto:/mosquitto/log
-      - ${DOCKERDIR}/appdata/mosquitto/data:/mosquitto/data
-      - ${DOCKERDIR}/appdata/mosquitto/config:/mosquitto/config
+      - ${DOCKERDIR}/logs/mosquitto:/var/log/mosquitto
+      - ${DOCKERDIR}/appdata/mosquitto/data:/var/lib/mosquitto
+      - ${DOCKERDIR}/appdata/mosquitto/config:/etc/mosquitto
+      - ${DOCKERDIR}/appdata/traefik/certs/zavia_wildcard.crt:/etc/mosquitto/certs/zavia_wildcard.crt:ro
+      - ${DOCKERDIR}/appdata/traefik/certs/zavia_wildcard.key:/etc/mosquitto/certs/zavia_wildcard.key:ro
     labels:
       - traefik.enable=true
       - traefik.tcp.routers.mqtt-rtr.entrypoints=mqtt

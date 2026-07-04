@@ -5,7 +5,7 @@ This runbook turns the approved plan into executable phases with checkpoints.
 ## Scope
 
 In scope:
-- Move `uns_builder` into this repository with history preserved
+- Keep `uns_builder` as a sibling workspace folder and wire it through compose
 - Refactor compose into modular, profile-driven architecture
 - Expose dev services on LAN via Traefik hostnames
 - Keep infrastructure services in this repository for reproducible local testing
@@ -44,40 +44,39 @@ Checkpoint:
 - Backups saved
 - Baseline status captured
 
-## Phase 1: Move `uns_builder` via Git Subtree
+## Phase 1: Workspace Layout and Path Alignment
 
-1. Add remote and fetch:
-
-```bash
-git remote add uns_builder_remote <repo-url>
-git fetch uns_builder_remote
-```
-
-2. Import subtree:
+1. Verify sibling repository layout:
 
 ```bash
-git subtree add --prefix=services/uns_builder uns_builder_remote <branch> --squash
+cd /home/saad/docker-deployments/appdata/hermes/data/workspace
+ls -la
 ```
 
-3. Verify history and files:
+Expected sibling folders:
+- `uns_builder/`
+- `spb_sim/`
+- `zavia-dev-env/`
+
+2. Verify compose path assumptions:
+- `zavia-dev-env/compose/docker-compose-uns-builder.yml` references `../../uns_builder`
+- `zavia-dev-env/compose/docker-compose-spb-sim.yml` references `../../spb_sim`
+
+3. Verify no obsolete path assumptions remain:
 
 ```bash
-git log -- services/uns_builder | head -n 20
-ls -la services/uns_builder
+grep -RIn "docker-compose.yml\|\.env\|../../uns_builder\|../../spb_sim" zavia-dev-env/compose zavia-dev-env/scripts
 ```
-
-4. Replace path assumptions in compose/scripts:
-- Replace `../uns_builder` references with `./services/uns_builder`-based paths.
 
 Checkpoint:
-- `services/uns_builder` exists
-- Subtree history present
-- No unresolved references to external repo path
+- Sibling folder layout exists
+- Compose paths resolve to sibling folders
+- No unresolved references to retired layout
 
 ## Phase 2: Compose Refactor to Modular Layout
 
 1. Create root compose entrypoint:
-- `docker-compose.dev.yml`
+- `docker-compose.yml`
 - define networks (`default`, `traefik_proxy`, `socket_proxy`)
 - include `compose/*.yml` modules
 
@@ -100,7 +99,7 @@ Checkpoint:
 4. Validate compose structure:
 
 ```bash
-docker compose --env-file .dev.env -f docker-compose.dev.yml config
+docker compose --env-file .env -f docker-compose.yml config
 ```
 
 Checkpoint:
@@ -137,7 +136,7 @@ Checkpoint:
 
 ## Phase 4: Environment, Secrets, and Persistence
 
-1. Promote `.env` to `.dev.env` and maintain `.dev.env.example`.
+1. Keep `.env` as runtime configuration and maintain `.dev.env.example` as template guidance.
 2. Move sensitive values into ignored secret paths.
 3. Ensure persistent paths exist under `appdata/` and `logs/`.
 4. Add scripts:
@@ -155,28 +154,28 @@ Checkpoint:
 1. Start core profile:
 
 ```bash
-docker compose --env-file .dev.env -f docker-compose.dev.yml --profile core up -d
+docker compose --env-file .env -f docker-compose.yml --profile core up -d
 ```
 
 2. Start additional profiles incrementally:
 
 ```bash
-docker compose --env-file .dev.env -f docker-compose.dev.yml --profile db --profile broker --profile monitoring --profile auth up -d
-docker compose --env-file .dev.env -f docker-compose.dev.yml --profile apps up -d
+docker compose --env-file .env -f docker-compose.yml --profile db --profile broker --profile monitoring --profile auth up -d
+docker compose --env-file .env -f docker-compose.yml --profile apps up -d
 ```
 
 3. Full stack alternative:
 
 ```bash
-docker compose --env-file .dev.env -f docker-compose.dev.yml --profile all up -d
+docker compose --env-file .env -f docker-compose.yml --profile all up -d
 ```
 
 4. Run checks:
 
 ```bash
 # Compose and status
-docker compose --env-file .dev.env -f docker-compose.dev.yml config
-docker compose --env-file .dev.env -f docker-compose.dev.yml ps
+docker compose --env-file .env -f docker-compose.yml config
+docker compose --env-file .env -f docker-compose.yml ps
 
 # Logs
 docker logs traefik
@@ -184,8 +183,8 @@ docker logs mosquitto
 docker logs postgres
 
 # Restart persistence smoke test
-docker compose --env-file .dev.env -f docker-compose.dev.yml down
-docker compose --env-file .dev.env -f docker-compose.dev.yml --profile all up -d
+docker compose --env-file .env -f docker-compose.yml down
+docker compose --env-file .env -f docker-compose.yml --profile all up -d
 ```
 
 Checkpoint:
@@ -195,7 +194,7 @@ Checkpoint:
 
 ## Deployment Acceptance Checklist
 
-- [ ] `uns_builder` imported and operational at `services/uns_builder`
+- [ ] `uns_builder` is available as sibling folder and operational via compose path mounts
 - [ ] Compose modularized and validated
 - [ ] All required infra present and healthy
 - [ ] Traefik host routes available on LAN
@@ -210,17 +209,10 @@ Checkpoint:
 ### Routine update cycle
 
 1. Pull latest changes.
-2. Update local `.dev.env` if template changed.
+2. Update local `.env` if template changed.
 3. Validate compose.
 4. Restart only changed profiles/services.
 5. Confirm service health and route access.
-
-### `uns_builder` subtree updates
-
-```bash
-git fetch uns_builder_remote
-git subtree pull --prefix=services/uns_builder uns_builder_remote <branch> --squash
-```
 
 ### Emergency rollback
 

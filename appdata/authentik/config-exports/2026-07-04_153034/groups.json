@@ -1,0 +1,197 @@
+[
+{
+  "model": "auth.group",
+  "pk": 2,
+  "fields": {
+    "name": "authentik Read-only",
+    "permissions": [
+      89,
+      505,
+      501,
+      26,
+      30,
+      4,
+      46,
+      12,
+      101,
+      517,
+      598,
+      610,
+      606,
+      602,
+      614,
+      105,
+      117,
+      133,
+      137,
+      125,
+      179,
+      141,
+      145,
+      149,
+      153,
+      157,
+      161,
+      165,
+      525,
+      537,
+      533,
+      60,
+      553,
+      549,
+      187,
+      191,
+      211,
+      223,
+      215,
+      219,
+      231,
+      235,
+      239,
+      243,
+      247,
+      251,
+      565,
+      273,
+      263,
+      277,
+      281,
+      285,
+      289,
+      301,
+      293,
+      297,
+      305,
+      317,
+      309,
+      321,
+      313,
+      329,
+      325,
+      333,
+      337,
+      349,
+      341,
+      353,
+      345,
+      357,
+      369,
+      373,
+      377,
+      381,
+      385,
+      577,
+      389,
+      393,
+      397,
+      401,
+      409,
+      413,
+      417,
+      425,
+      429,
+      433,
+      437,
+      441,
+      445,
+      449,
+      453,
+      457,
+      465,
+      461,
+      589,
+      469,
+      473,
+      477,
+      481,
+      594,
+      485,
+      489,
+      493,
+      497,
+      69
+    ]
+  }
+},
+{
+  "model": "authentik_core.group",
+  "pk": "26335b6a-9f2e-446c-b44b-87554b1754fd",
+  "fields": {
+    "attributes": {},
+    "name": "zavia-plant-operators",
+    "is_superuser": false,
+    "parent": "b26a305f-428d-4144-99ee-c71c0660a6b4",
+    "roles": []
+  }
+},
+{
+  "model": "authentik_core.group",
+  "pk": "347f85c8-6d7d-4425-b49f-d3de0f015352",
+  "fields": {
+    "attributes": {},
+    "name": "authentik Admins",
+    "is_superuser": true,
+    "parent": null,
+    "roles": []
+  }
+},
+{
+  "model": "authentik_core.group",
+  "pk": "5c95363f-464d-4895-9638-e6de3cbcc713",
+  "fields": {
+    "attributes": {},
+    "name": "zavia-tenants",
+    "is_superuser": false,
+    "parent": "b26a305f-428d-4144-99ee-c71c0660a6b4",
+    "roles": []
+  }
+},
+{
+  "model": "authentik_core.group",
+  "pk": "b26a305f-428d-4144-99ee-c71c0660a6b4",
+  "fields": {
+    "attributes": {},
+    "name": "Zavia-All",
+    "is_superuser": false,
+    "parent": null,
+    "roles": []
+  }
+},
+{
+  "model": "authentik_core.group",
+  "pk": "b2f0eca3-027c-4cb7-a0f7-88c888ec391e",
+  "fields": {
+    "attributes": {},
+    "name": "zavia-iot-engineers",
+    "is_superuser": false,
+    "parent": "b26a305f-428d-4144-99ee-c71c0660a6b4",
+    "roles": []
+  }
+},
+{
+  "model": "authentik_core.group",
+  "pk": "b7d1a08c-5e90-4cc8-8917-beb919ce127d",
+  "fields": {
+    "attributes": {
+      "notes": "An group with an auto-generated role that allows read-only permissions on all objects.\n"
+    },
+    "name": "authentik Read-only",
+    "is_superuser": false,
+    "parent": null,
+    "roles": [
+      "6929de4d-65ab-4231-a572-eb00d05b01ef"
+    ]
+  }
+},
+{
+  "model": "authentik_core.group",
+  "pk": "cae9361f-60f8-4930-87be-2906a58c64fd",
+  "fields": {
+    "attributes": {},
+    "name": "zavia-admins",
+    "is_superuser": false,
+    "parent": "b26a305f-428d-4144-99ee-c71c0660a6b4",
+    "roles": []
+  }
+}
+]

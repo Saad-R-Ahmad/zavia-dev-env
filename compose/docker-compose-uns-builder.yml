@@ -6,6 +6,11 @@ services:
     restart: unless-stopped
     container_name: zavia-uns-builder
     profiles: ["apps", "all"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mosquitto:
+        condition: service_started
     command: uvicorn main:app --app-dir /app/src --host 0.0.0.0 --port 8000 --reload --proxy-headers --forwarded-allow-ips='*'
     networks:
       - traefik_proxy
@@ -28,11 +33,11 @@ services:
       - mqtt_tls_enabled=${UNS_MQTT_TLS_ENABLED}
       - mqtt_will_topic=${UNS_MQTT_WILL_TOPIC}
       - mqtt_will_payload=${UNS_MQTT_WILL_PAYLOAD}
-      - OIDC_CLIENT_ID=Qp5tqrUExqPzZfOuyiO8ptGk6hbkmSEJhkUF6jms
-      - OIDC_CLIENT_SECRET=qmqm5IOhW4pHCcEAJayJoKfCNIvzV9qBkGK5WqJskNxa85miczMHXhkYOXCd2DniI5JZmedGMirwiJuoBfbn33z07eCQeh592xqoSY6aqTZCggaEQZ3kOejw4nhjsEiS
+      - OIDC_CLIENT_ID=${UNS_OIDC_CLIENT_ID}
+      - OIDC_CLIENT_SECRET=${UNS_OIDC_CLIENT_SECRET}
       - OIDC_ISSUER_URL=https://auth.zavia.lan/application/o/uns/
     volumes:
-      - ../../uns_builder/app/src:/app/src
+      - ../../uns_builder/backend/src:/app/src
       - ../../local_certs/out/zavia_rootCA.pem:/etc/ssl/certs/zavia_rootCA.pem:ro
     ports:
       - "${UNS_BUILDER_HOST_PORT:-8000}:8000"

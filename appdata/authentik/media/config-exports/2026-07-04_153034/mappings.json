@@ -1,0 +1,399 @@
+[
+{
+  "model": "authentik_core.propertymapping",
+  "pk": "01d80b3d-03b1-4224-9fdc-aeba5b51ad61",
+  "fields": {
+    "managed": "goauthentik.io/providers/google_workspace/user",
+    "name": "authentik default Google Workspace Mapping: User",
+    "expression": "# Field reference:\n# https://developers.google.com/admin-sdk/directory/reference/rest/v1/users#User\n# Google require givenName and familyName to be set\ngivenName, familyName = request.user.name, \" \"\nformatted = request.user.name + \" \"\n# This default sets givenName to the name before the first space\n# and the remainder as family name\n# if the user's name has no space the givenName is the entire name\nif \" \" in request.user.name:\n    givenName, _, familyName = request.user.name.partition(\" \")\n    formatted = request.user.name\nuser = {\n    \"name\": {\n        \"fullName\": formatted,\n        \"familyName\": familyName.strip(),\n        \"givenName\": givenName.strip(),\n        \"displayName\": formatted,\n    },\n    \"suspended\": not request.user.is_active,\n}\nif not connection:\n    user[\"password\"] = request.user.password\nreturn user"
+  }
+},
+{
+  "model": "authentik_core.propertymapping",
+  "pk": "12d0f1c0-bd44-4bf8-aace-2fb881d7f210",
+  "fields": {
+    "managed": "goauthentik.io/providers/saml/email",
+    "name": "authentik default SAML Mapping: Email",
+    "expression": "return request.user.email"
+  }
+},
+{
+  "model": "authentik_core.propertymapping",
+  "pk": "166e93d1-ddfc-46ab-b1c3-cc407e0f3e2d",
+  "fields": {
+    "managed": "goauthentik.io/providers/saml/uid",
+    "name": "authentik default SAML Mapping: User ID",
+    "expression": "return request.user.pk"
+  }
+},
+{
+  "model": "authentik_core.propertymapping",
+  "pk": "1e5cffac-f0e7-4200-a056-8dd375a9bc43",
+  "fields": {
+    "managed": "goauthentik.io/providers/rac/rdp-high-fidelity",
+    "name": "authentik default RAC Mapping: RDP High Fidelity",
+    "expression": ""
+  }
+},
+{
+  "model": "authentik_core.propertymapping",
+  "pk": "2b255bcf-e462-4377-a324-5546243df3cc",
+  "fields": {
+    "managed": "goauthentik.io/sources/kerberos/user/realm-as-group",
+    "name": "authentik default Kerberos User Mapping: Add realm as group",
+    "expression": "localpart, realm = principal.rsplit(\"@\", 1)\nreturn {\n    \"groups\": [realm.upper()]\n}"
+  }
+},
+{
+  "model": "authentik_core.propertymapping",
+  "pk": "2d2b2c58-17ed-4c9a-8189-12d65a987e66",
+  "fields": {
+    "managed": "goauthentik.io/providers/microsoft_entra/user",
+    "name": "authentik default Microsoft Entra Mapping: User",
+    "expression": "# Field reference: (note that keys have to converted to snake_case)\n# https://learn.microsoft.com/en-us/graph/api/resources/user?view=graph-rest-1.0\nfrom msgraph.generated.models.password_profile import PasswordProfile\n\nuser = {\n    \"display_name\": request.user.name,\n    \"account_enabled\": request.user.is_active,\n    \"mail_nickname\": request.user.username,\n    \"user_principal_name\": request.user.email,\n}\nif connection:\n    # If there is a connection already made (discover or update), we can use\n    # that connection's immutable_id...\n    user[\"on_premises_immutable_id\"] = connection.attributes.get(\"on_premises_immutable_id\")\nelse:\n    user[\"password_profile\"] = PasswordProfile(\n        password=request.user.password\n    )\n    # ...otherwise we set an immutable ID based on the user's UID\n    user[\"on_premises_immutable_id\"] = request.user.uid,\nreturn user"
+  }
+},
+{
+  "model": "authentik_core.propertymapping",
+  "pk": "2dad1f18-90fd-4f8a-abb9-db33b16b2c19",
+  "fields": {
+    "managed": "goauthentik.io/sources/ldap/default-name",
+    "name": "authentik default LDAP Mapping: Name",
+    "expression": "return {\n    \"name\": ldap.get(\"name\"),\n}"
+  }
+},
+{
+  "model": "authentik_core.propertymapping",
+  "pk": "2e87573f-d861-4f71-8c90-47bfc12c5c44",
+  "fields": {
+    "managed": "goauthentik.io/sources/kerberos/user/default/ignore-system-principals",
+    "name": "authentik default Kerberos User Mapping: Ignore system principals",
+    "expression": "localpart, realm = principal.rsplit(\"@\", 1)\ndenied_prefixes = [\"kadmin/\", \"krbtgt/\", \"K/M\", \"WELLKNOWN/\", \"kiprop/\", \"changepw/\"]\nfor prefix in denied_prefixes:\n    if localpart.lower().startswith(prefix.lower()):\n        raise SkipObject\nreturn {}"
+  }
+},
+{
+  "model": "authentik_core.propertymapping",
+  "pk": "3159df0b-4a92-425a-ad1e-94afdbbdcb30",
+  "fields": {
+    "managed": "goauthentik.io/providers/oauth2/scope-entitlements",
+    "name": "authentik default OAuth Mapping: Application Entitlements",
+    "expression": "entitlements = [entitlement.name for entitlement in request.user.app_entitlements(provider.application)]\nreturn {\n    \"entitlements\": entitlements,\n    \"roles\": entitlements,\n}"
+  }
+},
+{
+  "model": "authentik_core.propertymapping",
+  "pk": "45eb9de0-862d-430b-a105-8f27191a7185",
+  "fields": {
+    "managed": "goauthentik.io/providers/rac/rdp-default",
+    "name": "authentik default RAC Mapping: RDP Default settings",
+    "expression": ""
+  }
+},
+{
+  "model": "authentik_core.propertymapping",
+  "pk": "4b800aa2-d8c0-4f13-be30-4ae978193d48",
+  "fields": {
+    "managed": "goauthentik.io/sources/ldap/ms-userprincipalname",
+    "name": "authentik default Active Directory Mapping: userPrincipalName",
+    "expression": "return {\n    \"attributes\": {\n        \"upn\": list_flatten(ldap.get(\"userPrincipalName\")),\n    },\n}"
+  }
+},
+{
+  "model": "authentik_core.propertymapping",
+  "pk": "4bb1aea0-3f6c-488d-9645-63aac057981b",
+  "fields": {
+    "managed": "goauthentik.io/providers/saml/ms-windowsaccountname",
+    "name": "authentik default SAML Mapping: WindowsAccountname (Username)",
+    "expression": "return request.user.username"
+  }
+},
+{
+  "model": "authentik_core.propertymapping",
+  "pk": "5b913ab6-3e79-41c0-a554-da24048dd7a7",
+  "fields": {
+    "managed": "goauthentik.io/sources/ldap/default-mail",
+    "name": "authentik default LDAP Mapping: mail",
+    "expression": "return {\n    \"email\": ldap.get(\"mail\"),\n}"
+  }
+},
+{
+  "model": "authentik_core.propertymapping",
+  "pk": "5e80a25f-8fed-42c5-9502-5acd45261170",
+  "fields": {
+    "managed": "goauthentik.io/providers/oauth2/scope-authentik_api",
+    "name": "authentik default OAuth Mapping: authentik API access",
+    "expression": "# This scope grants the application the ability to access the authentik API\n# on behalf of the authorizing user\nreturn {}"
+  }
+},
+{
+  "model": "authentik_core.propertymapping",
+  "pk": "65fa3c14-b4a3-4a16-8f99-cf7fe6f20bfd",
+  "fields": {
+    "managed": "goauthentik.io/providers/saml/username",
+    "name": "authentik default SAML Mapping: Username",
+    "expression": "return request.user.username"
+  }
+},
+{
+  "model": "authentik_core.propertymapping",
+  "pk": "68fbe1f7-8361-4736-8d75-2eab2938e51d",
+  "fields": {
+    "managed": "goauthentik.io/sources/ldap/ms-samaccountname",
+    "name": "authentik default Active Directory Mapping: sAMAccountName",
+    "expression": "return {\n    \"username\": ldap.get(\"sAMAccountName\"),\n}"
+  }
+},
+{
+  "model": "authentik_core.propertymapping",
+  "pk": "6a91ab51-3a06-4b8d-8e57-cfad95cdb926",
+  "fields": {
+    "managed": null,
+    "name": "OAuth Mapping: OpenID 'groups'",
+    "expression": "return {\n\"groups\": list(request.user.ak_groups.values_list(\"name\", flat=True).distinct())\n}"
+  }
+},
+{
+  "model": "authentik_core.propertymapping",
+  "pk": "7916516f-864f-43e3-9aae-6fb6b3947eb1",
+  "fields": {
+    "managed": "goauthentik.io/providers/saml/upn",
+    "name": "authentik default SAML Mapping: UPN",
+    "expression": "return request.user.attributes.get('upn', request.user.email)"
+  }
+},
+{
+  "model": "authentik_core.propertymapping",
+  "pk": "7ffe84bd-b4b4-42a4-a4fa-0b82dec4c2f0",
+  "fields": {
+    "managed": "goauthentik.io/providers/scim/group",
+    "name": "authentik default SCIM Mapping: Group",
+    "expression": "return {\n    \"displayName\": group.name,\n}"
+  }
+},
+{
+  "model": "authentik_core.propertymapping",
+  "pk": "867a78cc-9c55-44ab-aec7-2dddb115b7bc",
+  "fields": {
+    "managed": "goauthentik.io/sources/ldap/ms-givenName",
+    "name": "authentik default Active Directory Mapping: givenName",
+    "expression": "return {\n    \"attributes\": {\n        \"givenName\": list_flatten(ldap.get(\"givenName\")),\n    },\n}"
+  }
+},
+{
+  "model": "authentik_core.propertymapping",
+  "pk": "9ccfe8cf-0d61-48d9-8c9c-69786fab691d",
+  "fields": {
+    "managed": "goauthentik.io/sources/ldap/default-dn-path",
+    "name": "authentik default LDAP Mapping: DN to User Path",
+    "expression": "path_elements = []\nfor pair in dn.split(\",\"):\n    attr, _, value = pair.partition(\"=\")\n    # Ignore elements from the Root DSE and the canonical name of the object\n    if attr.lower() in [\"cn\", \"dc\"]:\n        continue\n    path_elements.append(value)\npath_elements.reverse()\n\npath = source.get_user_path()\nif len(path_elements) > 0:\n    path = f\"{path}/{'/'.join(path_elements)}\"\nreturn {\n    \"path\": path\n}"
+  }
+},
+{
+  "model": "authentik_core.propertymapping",
+  "pk": "a4d57026-1ba9-45c7-993a-e16d2dd2a0f9",
+  "fields": {
+    "managed": "goauthentik.io/sources/kerberos/user/default/ignore-other-realms",
+    "name": "authentik default Kerberos User Mapping: Ignore other realms",
+    "expression": "localpart, realm = principal.rsplit(\"@\", 1)\nif realm.upper() != source.realm.upper():\n    raise SkipObject\nreturn {}"
+  }
+},
+{
+  "model": "authentik_core.propertymapping",
+  "pk": "a59452cc-0940-47e9-a53d-27dc84ab96ad",
+  "fields": {
+    "managed": "goauthentik.io/sources/ldap/openldap-uid",
+    "name": "authentik default OpenLDAP Mapping: uid",
+    "expression": "return {\n    \"username\": ldap.get(\"uid\"),\n}"
+  }
+},
+{
+  "model": "authentik_core.propertymapping",
+  "pk": "a6d96d2f-b36d-4fa8-a94b-48ca9dc30127",
+  "fields": {
+    "managed": "goauthentik.io/sources/kerberos/user/default/multipart-principals-as-service-accounts",
+    "name": "authentik default Kerberos User Mapping: Multipart principals as service accounts",
+    "expression": "from authentik.core.models import USER_PATH_SERVICE_ACCOUNT, UserTypes\n\nlocalpart, _ = principal.rsplit(\"@\", 1)\nis_service_account = \"/\" in localpart\nattrs = {}\nif is_service_account:\n    attrs = {\n        \"type\": UserTypes.SERVICE_ACCOUNT,\n        \"path\": USER_PATH_SERVICE_ACCOUNT,\n    }\nreturn attrs"
+  }
+},
+{
+  "model": "authentik_core.propertymapping",
+  "pk": "a8275f77-50e4-460e-9410-26526a537532",
+  "fields": {
+    "managed": "goauthentik.io/providers/oauth2/scope-offline_access",
+    "name": "authentik default OAuth Mapping: OpenID 'offline_access'",
+    "expression": "# This scope grants the application a refresh token that can be used to refresh user data\n# and let the application access authentik without the users interaction\nreturn {}"
+  }
+},
+{
+  "model": "authentik_core.propertymapping",
+  "pk": "b3438f36-14ce-4143-80ca-55e3dac51f28",
+  "fields": {
+    "managed": "goauthentik.io/sources/ldap/openldap-cn",
+    "name": "authentik default OpenLDAP Mapping: cn",
+    "expression": "return {\n    \"name\": ldap.get(\"cn\"),\n}"
+  }
+},
+{
+  "model": "authentik_core.propertymapping",
+  "pk": "b4078f99-d9d5-4260-9cd3-985e26d9c37a",
+  "fields": {
+    "managed": "goauthentik.io/providers/microsoft_entra/group",
+    "name": "authentik default Microsoft Entra Mapping: Group",
+    "expression": "# Field reference: (note that keys have to converted to snake_case)\n# https://learn.microsoft.com/en-us/graph/api/group-post-groups?view=graph-rest-1.0&tabs=http#request-body\nreturn {\n    \"display_name\": group.name,\n    \"mail_enabled\": False,\n    \"security_enabled\": True,\n    \"mail_nickname\": slugify(group.name),\n}"
+  }
+},
+{
+  "model": "authentik_core.propertymapping",
+  "pk": "b44508f6-8625-47c4-b626-cd911ce1ed79",
+  "fields": {
+    "managed": "goauthentik.io/providers/oauth2/scope-email",
+    "name": "authentik default OAuth Mapping: OpenID 'email'",
+    "expression": "return {\n    \"email\": request.user.email,\n    \"email_verified\": True\n}"
+  }
+},
+{
+  "model": "authentik_core.propertymapping",
+  "pk": "bd5c6fa4-01d1-41e4-b6b8-83a375479212",
+  "fields": {
+    "managed": "goauthentik.io/providers/oauth2/scope-openid",
+    "name": "authentik default OAuth Mapping: OpenID 'openid'",
+    "expression": "# This scope is required by the OpenID-spec, and must as such exist in authentik.\n# The scope by itself does not grant any information\nreturn {}"
+  }
+},
+{
+  "model": "authentik_core.propertymapping",
+  "pk": "c569bc6f-73a3-44ca-9d19-ff8ad18f0643",
+  "fields": {
+    "managed": "goauthentik.io/providers/oauth2/scope-profile",
+    "name": "authentik default OAuth Mapping: OpenID 'profile'",
+    "expression": "return {\n    # Because authentik only saves the user's full name, and has no concept of first and last names,\n    # the full name is used as given name.\n    # You can override this behaviour in custom mappings, i.e. `request.user.name.split(\" \")`\n    \"name\": request.user.name,\n    \"given_name\": request.user.name,\n    \"preferred_username\": request.user.username,\n    \"nickname\": request.user.username,\n    \"groups\": [group.name for group in request.user.ak_groups.all()],\n}"
+  }
+},
+{
+  "model": "authentik_core.propertymapping",
+  "pk": "cbfeac5c-90fd-4e16-8933-59ac1e957d94",
+  "fields": {
+    "managed": "goauthentik.io/providers/saml/name",
+    "name": "authentik default SAML Mapping: Name",
+    "expression": "return request.user.name"
+  }
+},
+{
+  "model": "authentik_core.propertymapping",
+  "pk": "d193763b-ef5f-41df-abad-856b76ae91e9",
+  "fields": {
+    "managed": "goauthentik.io/providers/proxy/scope-proxy",
+    "name": "authentik default OAuth Mapping: Proxy outpost",
+    "expression": "# This mapping is used by the authentik proxy. It passes extra user attributes,\n# which are used for example for the HTTP-Basic Authentication mapping.\nreturn {\n    \"ak_proxy\": {\n        \"user_attributes\": request.user.group_attributes(request),\n        \"is_superuser\": request.user.is_superuser,\n    }\n}"
+  }
+},
+{
+  "model": "authentik_core.propertymapping",
+  "pk": "dc08f0d5-cd7d-488b-a9a5-28fa68a78236",
+  "fields": {
+    "managed": "goauthentik.io/providers/scim/user",
+    "name": "authentik default SCIM Mapping: User",
+    "expression": "# Some implementations require givenName and familyName to be set\ngivenName, familyName = request.user.name, \" \"\nformatted = request.user.name + \" \"\n# This default sets givenName to the name before the first space\n# and the remainder as family name\n# if the user's name has no space the givenName is the entire name\n# (this might cause issues with some SCIM implementations)\nif \" \" in request.user.name:\n    givenName, _, familyName = request.user.name.partition(\" \")\n    formatted = request.user.name\n\n# photos supports URLs to images, however authentik might return data URIs\navatar = request.user.avatar\nphotos = None\nif \"://\" in avatar:\n    photos = [{\"value\": avatar, \"type\": \"photo\"}]\n\nlocale = request.user.locale()\nif locale == \"\":\n    locale = None\n\nemails = []\nif request.user.email != \"\":\n    emails = [{\n        \"value\": request.user.email,\n        \"type\": \"other\",\n        \"primary\": True,\n    }]\nreturn {\n    \"userName\": request.user.username,\n    \"name\": {\n        \"formatted\": formatted,\n        \"givenName\": givenName,\n        \"familyName\": familyName,\n    },\n    \"displayName\": request.user.name,\n    \"photos\": photos,\n    \"locale\": locale,\n    \"active\": request.user.is_active,\n    \"emails\": emails,\n}"
+  }
+},
+{
+  "model": "authentik_core.propertymapping",
+  "pk": "e5abcb27-be78-4daf-8c84-7c3fd94e98a0",
+  "fields": {
+    "managed": "goauthentik.io/providers/google_workspace/group",
+    "name": "authentik default Google Workspace Mapping: Group",
+    "expression": "# Field reference:\n# https://developers.google.com/admin-sdk/directory/reference/rest/v1/groups#Group\nreturn {\n    \"name\": group.name,\n}"
+  }
+},
+{
+  "model": "authentik_core.propertymapping",
+  "pk": "eb035831-07fd-4e60-9403-bce0fbe6e34c",
+  "fields": {
+    "managed": "goauthentik.io/providers/rac/ssh-default",
+    "name": "authentik default RAC Mapping: SSH Default settings",
+    "expression": ""
+  }
+},
+{
+  "model": "authentik_core.propertymapping",
+  "pk": "f23e890a-f6c7-4e89-a9de-b293007b2adf",
+  "fields": {
+    "managed": "goauthentik.io/sources/ldap/ms-sn",
+    "name": "authentik default Active Directory Mapping: sn",
+    "expression": "return {\n    \"attributes\": {\n        \"sn\": list_flatten(ldap.get(\"sn\")),\n    },\n}"
+  }
+},
+{
+  "model": "authentik_core.propertymapping",
+  "pk": "fe4e6bd6-2397-44cc-95a4-389abb5c2f6a",
+  "fields": {
+    "managed": "goauthentik.io/providers/saml/groups",
+    "name": "authentik default SAML Mapping: Groups",
+    "expression": "for group in request.user.ak_groups.all():\n    yield group.name"
+  }
+},
+{
+  "model": "authentik_providers_oauth2.scopemapping",
+  "pk": "3159df0b-4a92-425a-ad1e-94afdbbdcb30",
+  "fields": {
+    "scope_name": "entitlements",
+    "description": "Application entitlements"
+  }
+},
+{
+  "model": "authentik_providers_oauth2.scopemapping",
+  "pk": "5e80a25f-8fed-42c5-9502-5acd45261170",
+  "fields": {
+    "scope_name": "goauthentik.io/api",
+    "description": "authentik API Access on behalf of your user"
+  }
+},
+{
+  "model": "authentik_providers_oauth2.scopemapping",
+  "pk": "6a91ab51-3a06-4b8d-8e57-cfad95cdb926",
+  "fields": {
+    "scope_name": "groups",
+    "description": "scope mapping to pass group information on OAuth2"
+  }
+},
+{
+  "model": "authentik_providers_oauth2.scopemapping",
+  "pk": "a8275f77-50e4-460e-9410-26526a537532",
+  "fields": {
+    "scope_name": "offline_access",
+    "description": "Access to request new tokens without interaction"
+  }
+},
+{
+  "model": "authentik_providers_oauth2.scopemapping",
+  "pk": "b44508f6-8625-47c4-b626-cd911ce1ed79",
+  "fields": {
+    "scope_name": "email",
+    "description": "Email address"
+  }
+},
+{
+  "model": "authentik_providers_oauth2.scopemapping",
+  "pk": "bd5c6fa4-01d1-41e4-b6b8-83a375479212",
+  "fields": {
+    "scope_name": "openid",
+    "description": ""
+  }
+},
+{
+  "model": "authentik_providers_oauth2.scopemapping",
+  "pk": "c569bc6f-73a3-44ca-9d19-ff8ad18f0643",
+  "fields": {
+    "scope_name": "profile",
+    "description": "General Profile Information"
+  }
+},
+{
+  "model": "authentik_providers_oauth2.scopemapping",
+  "pk": "d193763b-ef5f-41df-abad-856b76ae91e9",
+  "fields": {
+    "scope_name": "ak_proxy",
+    "description": "authentik Proxy - User information"
+  }
+}
+]

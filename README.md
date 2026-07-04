@@ -7,7 +7,7 @@ Unified development environment for Zavia services with Traefik LAN routing, inf
 This repository is the single operational workspace for development of:
 
 - Zavia app services
-- `uns_builder` (moved into this repo via git subtree)
+- `uns_builder` (kept as a sibling folder in the workspace and mounted by compose)
 - Infrastructure dependencies used in development and integration tests:
   - Traefik
   - PostgreSQL + pgAdmin
@@ -20,7 +20,7 @@ This repository is the single operational workspace for development of:
 ## Key Decisions
 
 - **Monorepo operations model**: Keep application and infra in one place to reduce context switching and environment drift.
-- **`uns_builder` migration strategy**: Use git subtree to preserve history and keep local workflows simple.
+- **`uns_builder` integration strategy**: Keep service code in `../uns_builder` and wire it through compose mounts/build context.
 - **LAN access model**: Use domain-based Traefik routing for local-network testing (`*.zavia.local`).
 - **Security baseline for dev**: Keep Docker socket behind socket-proxy and protect dashboard routes.
 
@@ -32,8 +32,8 @@ Target layout to implement and maintain:
 
 ```text
 zavia-dev-env/
-├── docker-compose.dev.yml
-├── .dev.env
+├── docker-compose.yml
+├── .env
 ├── compose/
 │   ├── docker-compose-socket-proxy.yml
 │   ├── docker-compose-traefik-local.yml
@@ -46,13 +46,16 @@ zavia-dev-env/
 │   ├── docker-compose-pgadmin.yml
 │   ├── docker-compose-uns-builder.yml
 │   └── docker-compose-zavia-apps.yml
-├── services/
-│   └── uns_builder/
 ├── appdata/
 ├── logs/
 ├── scripts/
 └── docs/
     └── EXECUTION-PLAN.md
+
+workspace/
+├── uns_builder/
+├── spb_sim/
+└── zavia-dev-env/
 ```
 
 ## Prerequisites
@@ -69,14 +72,14 @@ zavia-dev-env/
 1. Copy environment template and set local values:
 
 ```bash
-cp .dev.env.example .dev.env
+cp .dev.env.example .env
 ```
 
 Important: this repo uses compose `include`, so paths in included files resolve from `compose/`.
 Keep these defaults unless you intentionally restructure the repo:
 
 - `DOCKERDIR=..`
-- `UNS_BUILDER_CONTEXT=../services/uns_builder`
+- `UNS_BUILDER` compose service context points to `../../uns_builder`
 
 2. Configure DNS for LAN testing:
 - Preferred: wildcard or host records for `*.zavia.local` to server LAN IP
@@ -85,25 +88,25 @@ Keep these defaults unless you intentionally restructure the repo:
 3. Validate compose:
 
 ```bash
-docker compose --env-file .dev.env -f docker-compose.dev.yml config
+docker compose --env-file .env -f docker-compose.yml config
 ```
 
 4. Start core services first:
 
 ```bash
-docker compose --env-file .dev.env -f docker-compose.dev.yml --profile core up -d
+docker compose --env-file .env -f docker-compose.yml --profile core up -d
 ```
 
 5. Start app services:
 
 ```bash
-docker compose --env-file .dev.env -f docker-compose.dev.yml --profile apps up -d
+docker compose --env-file .env -f docker-compose.yml --profile apps up -d
 ```
 
 6. Or start everything:
 
 ```bash
-docker compose --env-file .dev.env -f docker-compose.dev.yml --profile all up -d
+docker compose --env-file .env -f docker-compose.yml --profile all up -d
 ```
 
 ## Example Endpoints
@@ -120,9 +123,9 @@ docker compose --env-file .dev.env -f docker-compose.dev.yml --profile all up -d
 
 Application services can be accessed both through Traefik hostnames and directly from the host machine via mapped ports.
 
-- Configure `UNS_BUILDER_HOST_PORT` in `.dev.env` (default: `18000`)
+- Configure `UNS_BUILDER_HOST_PORT` in `.env` (default: `18000`)
 - Access UNS Builder directly at `http://localhost:<UNS_BUILDER_HOST_PORT>`
-- Ensure UNS MQTT vars are set in `.dev.env` (template includes defaults) so app startup validation passes.
+- Ensure UNS MQTT vars are set in `.env` (template includes defaults) so app startup validation passes.
 
 ## Operations
 
@@ -138,11 +141,11 @@ Start / stop / inspect:
 ./scripts/start-dev.sh all
 
 # Or start all directly via compose
-docker compose --env-file .dev.env -f docker-compose.dev.yml --profile all up -d
+docker compose --env-file .env -f docker-compose.yml --profile all up -d
 
 # Status
 ./scripts/status.sh
-docker compose --env-file .dev.env -f docker-compose.dev.yml ps
+docker compose --env-file .env -f docker-compose.yml ps
 
 # Logs
 docker logs traefik
@@ -150,14 +153,14 @@ docker logs postgres
 docker logs mosquitto
 
 # Stop
-docker compose --env-file .dev.env -f docker-compose.dev.yml --profile all down
+docker compose --env-file .env -f docker-compose.yml --profile all down
 ```
 
 Destructive reset:
 
 ```bash
 # WARNING: removes persistent volumes
-docker compose --env-file .dev.env -f docker-compose.dev.yml --profile all down -v
+docker compose --env-file .env -f docker-compose.yml --profile all down -v
 ```
 
 ## Validation Checklist
@@ -173,30 +176,11 @@ docker compose --env-file .dev.env -f docker-compose.dev.yml --profile all down 
 
 See `docs/EXECUTION-PLAN.md` for the full step-by-step execution runbook.
 
-## `uns_builder` Subtree Maintenance
+## `uns_builder` Source Location
 
-One-time import pattern:
-
-```bash
-git remote add uns_builder_remote <repo-url>
-git fetch uns_builder_remote
-git subtree add --prefix=services/uns_builder uns_builder_remote <branch> --squash
-```
-
-Pull upstream changes:
-
-```bash
-git fetch uns_builder_remote
-git subtree pull --prefix=services/uns_builder uns_builder_remote <branch> --squash
-```
-
-Push subtree changes back (if needed):
-
-```bash
-git subtree push --prefix=services/uns_builder uns_builder_remote <branch>
-```
-
-Team rule: keep subtree strategy (`--squash` vs non-squash) consistent.
+`uns_builder` is expected at the workspace level next to `zavia-dev-env` and `spb_sim`.
+The compose files in `compose/` reference it using relative paths (for example `../../uns_builder`).
+If you move folders, update these compose build contexts and volume mounts together.
 
 ## Security and Secrets (Dev)
 
@@ -234,7 +218,7 @@ Team rule: keep subtree strategy (`--squash` vs non-squash) consistent.
 
 - Platform/DevOps: compose architecture, infra services, Traefik, scripts
 - Service teams: app-specific configuration, migrations, healthchecks
-- Everyone: keep docs and `.dev.env.example` updated when changing service behavior
+- Everyone: keep docs and `.dev.env.example` / `.env` guidance updated when changing service behavior
 
 ## Change Management
 
