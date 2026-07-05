@@ -6,8 +6,8 @@ PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 AUTH_DIR="${PROJECT_ROOT}/appdata/authentik"
 CONTAINER_NAME="${1:-zavia-authentik}"
 TS="$(date +%Y-%m-%d_%H%M%S)"
-EXPORT_DIR="${AUTH_DIR}/config-exports/blueprints/${TS}"
-CURRENT_DIR="${AUTH_DIR}/config-exports/blueprints/current"
+EXPORT_DIR="${AUTH_DIR}/blueprints/snapshots/${TS}"
+CURRENT_DIR="${AUTH_DIR}/blueprints/current"
 
 if ! docker ps --format '{{.Names}}' | grep -Fxq "${CONTAINER_NAME}"; then
   echo "Container not running: ${CONTAINER_NAME}" >&2
@@ -32,16 +32,15 @@ if ! grep -q '^entries:' "${TMP_FILE}"; then
 fi
 
 # Create destination with root helper because appdata/authentik may be root-owned.
-docker run --rm -v "${AUTH_DIR}:/target" alpine:3.20 sh -lc "mkdir -p /target/config-exports/blueprints/${TS}"
+docker run --rm -v "${AUTH_DIR}:/target" alpine:3.20 sh -lc "mkdir -p /target/blueprints/snapshots/${TS} /target/blueprints/current"
 
 # Copy blueprint and metadata.
-cat "${TMP_FILE}" | docker run --rm -i -v "${AUTH_DIR}:/target" alpine:3.20 sh -lc "cat > /target/config-exports/blueprints/${TS}/authentik-blueprint.yaml"
+cat "${TMP_FILE}" | docker run --rm -i -v "${AUTH_DIR}:/target" alpine:3.20 sh -lc "cat > /target/blueprints/snapshots/${TS}/authentik-blueprint.yaml"
 
 # Refresh the stable blueprint path that compose mounts for auto-apply.
-docker run --rm -v "${AUTH_DIR}:/target" alpine:3.20 sh -lc "mkdir -p /target/config-exports/blueprints/current"
-cat "${TMP_FILE}" | docker run --rm -i -v "${AUTH_DIR}:/target" alpine:3.20 sh -lc "cat > /target/config-exports/blueprints/current/authentik-blueprint.yaml"
+cat "${TMP_FILE}" | docker run --rm -i -v "${AUTH_DIR}:/target" alpine:3.20 sh -lc "cat > /target/blueprints/current/authentik-blueprint.yaml"
 
-cat <<EOF | docker run --rm -i -v "${AUTH_DIR}:/target" alpine:3.20 sh -lc "cat > /target/config-exports/blueprints/${TS}/manifest.json"
+cat <<EOF | docker run --rm -i -v "${AUTH_DIR}:/target" alpine:3.20 sh -lc "cat > /target/blueprints/snapshots/${TS}/manifest.json"
 {
   "exported_at_utc": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
   "source_container": "${CONTAINER_NAME}",
@@ -53,7 +52,7 @@ cat <<EOF | docker run --rm -i -v "${AUTH_DIR}:/target" alpine:3.20 sh -lc "cat 
 }
 EOF
 
-cat <<'EOF' | docker run --rm -i -v "${AUTH_DIR}:/target" alpine:3.20 sh -lc "cat > /target/config-exports/blueprints/${TS}/README.md"
+cat <<'EOF' | docker run --rm -i -v "${AUTH_DIR}:/target" alpine:3.20 sh -lc "cat > /target/blueprints/snapshots/${TS}/README.md"
 # Authentik Blueprint Snapshot
 
 This folder contains a full Authentik blueprint exported from the running instance.
@@ -64,7 +63,7 @@ This folder contains a full Authentik blueprint exported from the running instan
 
 ## Apply to a new environment
 
-1. Copy the blueprint into the target Authentik blueprints mount (for this stack, under `appdata/authentik/custom-templates/blueprints/` or another blueprints-import path you configure).
+1. Copy the blueprint into the target Authentik blueprints mount (for this stack, under `appdata/authentik/blueprints/current/` or another blueprints-import path you configure).
 2. Trigger import from the Authentik admin UI Blueprints page, or run:
 
 ```bash

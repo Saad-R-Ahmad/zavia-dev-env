@@ -8,7 +8,7 @@ This folder contains a full Authentik blueprint exported from the running instan
 
 ## Apply to a new environment
 
-1. Copy the blueprint into the target Authentik blueprints mount (for this stack, under `appdata/authentik/custom-templates/blueprints/` or another blueprints-import path you configure).
+1. Copy the blueprint into the target Authentik blueprints mount (for this stack, under `appdata/authentik/blueprints/current/` or another blueprints-import path you configure).
 2. Trigger import from the Authentik admin UI Blueprints page, or run:
 
 ```bash

@@ -63,7 +63,7 @@ services:
       - AUTHENTIK_POSTGRESQL__PASSWORD=${AUTHENTIK_DB_PASSWORD}
     volumes:
       - ${DOCKERDIR}/appdata/authentik/media:/media
-      - ${DOCKERDIR}/appdata/authentik/config-exports/blueprints/current:/blueprints/custom:ro
+      - ${DOCKERDIR}/appdata/authentik/blueprints/current:/blueprints/custom:ro
 
   authentik-server:
     image: ghcr.io/goauthentik/server:2025.6
@@ -101,7 +101,6 @@ services:
     volumes:
       - ${DOCKERDIR}/appdata/authentik/media:/media
       - ${DOCKERDIR}/appdata/authentik/custom-templates:/templates
-      - ${DOCKERDIR}/appdata/authentik/config-exports/blueprints/current:/blueprints/custom:ro
     labels:
       - traefik.enable=true
       - traefik.http.routers.auth-rtr-http.entrypoints=web
@@ -143,4 +142,3 @@ services:
     volumes:
       - ${DOCKERDIR}/appdata/authentik/media:/media
       - ${DOCKERDIR}/appdata/authentik/custom-templates:/templates
-      - ${DOCKERDIR}/appdata/authentik/config-exports/blueprints/current:/blueprints/custom:ro
