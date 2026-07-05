@@ -20,7 +20,11 @@ services:
       - ${DOCKERDIR}/appdata/influxdb/config:/etc/influxdb2
     labels:
       - traefik.enable=true
+      - traefik.http.routers.influxdb-rtr-http.entrypoints=web
+      - traefik.http.routers.influxdb-rtr-http.rule=Host(`influxdb.${DOMAINNAME_1}`)
+      - traefik.http.routers.influxdb-rtr-http.service=influxdb-svc
       - traefik.http.routers.influxdb-rtr.entrypoints=websecure
       - traefik.http.routers.influxdb-rtr.rule=Host(`influxdb.${DOMAINNAME_1}`)
+      - traefik.http.routers.influxdb-rtr.tls=true
       - traefik.http.routers.influxdb-rtr.service=influxdb-svc
       - traefik.http.services.influxdb-svc.loadbalancer.server.port=8086

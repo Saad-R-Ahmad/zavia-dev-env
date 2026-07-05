@@ -20,8 +20,8 @@ This repository is the single operational workspace for development of:
 ## Key Decisions
 
 - **Monorepo operations model**: Keep application and infra in one place to reduce context switching and environment drift.
-- **`uns_builder` integration strategy**: Keep service code in `../uns_builder` and wire it through compose mounts/build context.
-- **LAN access model**: Use domain-based Traefik routing for local-network testing (`*.zavia.local`).
+- **`uns_builder` integration strategy**: Keep service code in sibling `uns_builder` and wire it through compose mounts/build context.
+- **LAN access model**: Use domain-based Traefik routing for local-network testing (`*.zavia.lan`).
 - **Security baseline for dev**: Keep Docker socket behind socket-proxy and protect dashboard routes.
 
 ## Current vs Target Layout
@@ -79,10 +79,10 @@ Important: this repo uses compose `include`, so paths in included files resolve 
 Keep these defaults unless you intentionally restructure the repo:
 
 - `DOCKERDIR=..`
-- `UNS_BUILDER` compose service context points to `../../uns_builder`
+- `UNS_BUILDER_CONTEXT=../../uns_builder`
 
 2. Configure DNS for LAN testing:
-- Preferred: wildcard or host records for `*.zavia.local` to server LAN IP
+- Preferred: wildcard or host records for `*.zavia.lan` to server LAN IP
 - Fallback: hosts entries on test clients
 
 3. Validate compose:
@@ -111,10 +111,10 @@ docker compose --env-file .env -f docker-compose.yml --profile all up -d
 
 ## Example Endpoints
 
-- Traefik Dashboard: `https://traefik.zavia.local`
-- Authentik: `https://auth.zavia.local`
-- pgAdmin: `https://pgadmin.zavia.local`
-- UNS Builder API/UI: `https://uns.zavia.local`
+- Traefik Dashboard: `https://traefik.zavia.lan`
+- Authentik: `https://auth.zavia.lan`
+- pgAdmin: `https://pgadmin.zavia.lan`
+- UNS Builder API/UI: `https://uns.zavia.lan`
 - UNS Builder direct host access: `http://localhost:${UNS_BUILDER_HOST_PORT}` (default `http://localhost:18000`)
 - MQTT TCP: `<server-ip>:1883`
 - MQTT TLS: `<server-ip>:8883`

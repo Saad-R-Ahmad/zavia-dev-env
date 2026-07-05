@@ -1,7 +1,7 @@
 services:
   uns-builder:
     build:
-      context: ../../uns_builder
+      context: ${UNS_BUILDER_CONTEXT:-../../uns_builder}
       dockerfile: Dockerfile
     restart: unless-stopped
     container_name: zavia-uns-builder
@@ -36,8 +36,13 @@ services:
       - OIDC_CLIENT_ID=${UNS_OIDC_CLIENT_ID}
       - OIDC_CLIENT_SECRET=${UNS_OIDC_CLIENT_SECRET}
       - OIDC_ISSUER_URL=https://auth.zavia.lan/application/o/uns/
+      - OIDC_VERIFY_TLS=true
+      - INFLUXDB_URL=${INFLUXDB_URL}
+      - INFLUXDB_TOKEN=${INFLUXDB_INIT_ADMIN_TOKEN}
+      - INFLUXDB_ORG=${INFLUXDB_INIT_ORG}
+      - INFLUXDB_BUCKET=${INFLUXDB_INIT_BUCKET}
     volumes:
-      - ../../uns_builder/backend/src:/app/src
+      - ${UNS_BUILDER_CONTEXT:-../../uns_builder}/backend/src:/app/src
       - ../../local_certs/out/zavia_rootCA.pem:/etc/ssl/certs/zavia_rootCA.pem:ro
     ports:
       - "${UNS_BUILDER_HOST_PORT:-8000}:8000"

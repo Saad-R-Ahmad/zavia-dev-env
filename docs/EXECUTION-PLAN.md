@@ -49,7 +49,7 @@ Checkpoint:
 1. Verify sibling repository layout:
 
 ```bash
-cd /home/saad/docker-deployments/appdata/hermes/data/workspace
+cd <your-workspace-root>
 ls -la
 ```
 
@@ -116,14 +116,14 @@ Checkpoint:
 - File provider for middleware/rules
 
 2. Define host rules:
-- `traefik.zavia.local`
-- `auth.zavia.local`
-- `pgadmin.zavia.local`
-- `uns.zavia.local`
+- `traefik.zavia.lan`
+- `auth.zavia.lan`
+- `pgadmin.zavia.lan`
+- `uns.zavia.lan`
 - additional app hosts as needed
 
 3. DNS strategy:
-- Preferred: router DNS override for `*.zavia.local`
+- Preferred: router DNS override for `*.zavia.lan`
 - Fallback: hosts file on each test client
 
 4. Protect dashboard and sensitive routes:

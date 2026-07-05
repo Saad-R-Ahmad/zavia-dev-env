@@ -8,5 +8,12 @@ services:
       - default
     depends_on:
       - influxdb
+    environment:
+      - TELEGRAF_INFLUXDB_ORG=${INFLUXDB_INIT_ORG}
+      - TELEGRAF_INFLUXDB_BUCKET=${INFLUXDB_INIT_BUCKET}
+      - TELEGRAF_INFLUXDB_TOKEN=${INFLUXDB_INIT_ADMIN_TOKEN}
+      - TELEGRAF_MQTT_USERNAME=${UNS_MQTT_USERNAME}
+      - TELEGRAF_MQTT_PASSWORD=${UNS_MQTT_PASSWORD}
     volumes:
       - ${DOCKERDIR}/appdata/telegraf/config/telegraf.conf:/etc/telegraf/telegraf.conf:rw
+      - ${DOCKERDIR}/appdata/telegraf/starlark/starlark_script.star:/etc/telegraf/starlark/starlark_script.star:ro
