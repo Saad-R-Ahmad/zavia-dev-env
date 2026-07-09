@@ -1,6 +1,6 @@
 services:
   traefik:
-    image: traefik:3.3
+    image: traefik:3.7.7
     restart: unless-stopped
     profiles: ["core", "all"]
     container_name: zavia-traefik
@@ -44,6 +44,7 @@ services:
       - TZ=${TZ}
       - DOMAINNAME_1=${DOMAINNAME_1}
       - LOCAL_IPS=${LOCAL_IPS}
+      - DOCKER_API_VERSION=1.44
     labels:
       - traefik.enable=true
       - traefik.http.routers.traefik-api-rtr-http.entrypoints=web
