@@ -1,4 +1,5 @@
 # Local development env files
+.env
 .dev.env
 secrets/
 
@@ -11,6 +12,15 @@ appdata/**/data/
 appdata/**/pgdata/*
 compose/appdata/**/data/
 compose/appdata/**/pgdata/*
+
+# Authentik generated/runtime state — NOT canonical IaC.
+# The canonical blueprint lives in appdata/authentik/blueprints/current/,
+# hand-maintained and secret-free. Everything below is either a live-instance
+# export snapshot (may contain secrets, runtime UUIDs, obsolete groups/users)
+# or an applicator-managed runtime artifact, and must not be committed.
+appdata/authentik/media/
+appdata/authentik/blueprints/snapshots/
+appdata/authentik/config-exports/
 
 # IDE/OS
 .DS_Store

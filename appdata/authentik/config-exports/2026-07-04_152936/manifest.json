@@ -1,5 +1,0 @@
-{
-  "exported_at_utc": "2026-07-04T14:29:51Z",
-  "source_container": "zavia-authentik",
-  "files": ["groups.json", "applications.json", "oidc_providers.json", "mappings.json"]
-}
