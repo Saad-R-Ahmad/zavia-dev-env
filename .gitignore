@@ -1,5 +1,4 @@
 # Local development env files
-.env
 .dev.env
 secrets/
 
