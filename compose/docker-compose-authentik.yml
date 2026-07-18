@@ -38,11 +38,12 @@ services:
           apply_ok = False
           print(f'Blueprint apply error: {exc}')
 
-        hash_file.write_text(new_hash + '\n')
         if apply_ok:
+          hash_file.write_text(new_hash + '\n')
           print('Blueprint apply completed and hash updated')
         else:
-          print('Blueprint apply had errors; hash updated to prevent repeated retries on unchanged blueprint')
+          print('Blueprint apply had errors; hash NOT updated so the next run retries this blueprint')
+          raise SystemExit(1)
     depends_on:
       postgres:
         condition: service_healthy
@@ -61,6 +62,8 @@ services:
       - AUTHENTIK_POSTGRESQL__NAME=${AUTHENTIK_DB_NAME}
       - AUTHENTIK_POSTGRESQL__USER=${AUTHENTIK_DB_USER}
       - AUTHENTIK_POSTGRESQL__PASSWORD=${AUTHENTIK_DB_PASSWORD}
+      - UNS_OIDC_CLIENT_ID=${UNS_OIDC_CLIENT_ID}
+      - UNS_OIDC_CLIENT_SECRET=${UNS_OIDC_CLIENT_SECRET}
     volumes:
       - ${DOCKERDIR}/appdata/authentik/media:/media
       - ${DOCKERDIR}/appdata/authentik/blueprints/current:/blueprints/custom:ro

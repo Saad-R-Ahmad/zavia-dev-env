@@ -43,7 +43,7 @@ services:
       - INFLUXDB_ORG=${INFLUXDB_INIT_ORG}
       - INFLUXDB_BUCKET=${INFLUXDB_INIT_BUCKET}
     volumes:
-      - ${UNS_BUILDER_CONTEXT:-../../uns_builder}/app/src:/app/src
+      - ${UNS_BUILDER_CONTEXT:-../../uns_builder}/backend/src:/app/src
       - ../../local_certs/out/zavia_rootCA.pem:/etc/ssl/certs/zavia_rootCA.pem:ro
     ports:
       - "${UNS_BUILDER_HOST_PORT:-8000}:8000"
